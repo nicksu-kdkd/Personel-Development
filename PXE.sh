@@ -2,7 +2,7 @@
 ## This script will check the environment for PXE and automatically install and config the needed servers or files.
 ## Before you run this script , please pay attention to the below constants , and do place the installation media
 ## the iso file in the /ISO , and named as centos.iso or any as you want , but do remember to update this script
-## Author: Chu Lin Su
+## Author: Nick Su
 ## Date:   19/05/2015
 ## Email:  nicksu383@gmail.com
 ## Version: 1.0
