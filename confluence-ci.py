@@ -44,7 +44,6 @@ def post_doc(TITLE):
 	    'Content-Type': 'application/json',
 	}
 	content = parse_md(TITLE)
-	print content
 	if fileName == "SUMMARY":
 		pivot = re.compile('\w+\.\w+')
 		for i in re.findall(pivot, content):
