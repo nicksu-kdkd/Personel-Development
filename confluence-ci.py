@@ -12,10 +12,26 @@ def query_id(TITLE):
 	query_link = baseLink + "/rest/api/content/"
 	params = (
 	    ('title', TITLE.split('.')[0]),
+	    ('spaceKey', SPACE),
 	)
 	response = requests.get(query_link, params=params, auth=(USER, PASSWORD))
 	ID = json.loads(response.content)['results'][0]['id']
 	return ID
+
+# query version
+def query_version(TITLE):
+	query_link = baseLink + "/rest/api/content/"
+	params = (
+	    ('title', TITLE.split('.')[0]),
+	    ('spaceKey', SPACE),
+	    ('expand', 'version'),
+	)
+	response = requests.get(query_link, params=params, auth=(USER, PASSWORD))
+	try:
+		VERSION = json.loads(response.content)['results'][0]['version']['number']
+	except:
+		VERSION = 0
+	return VERSION
 
 # delete post
 def delete_doc(TITLE):
@@ -49,6 +65,9 @@ def post_doc(TITLE, parentID):
 		for i in re.findall(pivot, content):
 			url = query_link(i)
 			content = re.sub(i,url,content)
+	postVersion = query_version(TITLE)
+	if postVersion != 0:
+		update_post(fileName, postVersion, content, TITLE, headers)
 	if parentID:
 		data = {'type':'page','title':fileName,'ancestors':[{'type':'page','id':parentID}],'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
 	else:
@@ -56,8 +75,24 @@ def post_doc(TITLE, parentID):
 	response = requests.post(post_link, auth=(USER, PASSWORD), data=json.dumps(data), headers=headers)
 	if response.status_code == requests.codes.ok:
 		print("{0} successfully posted".format(TITLE))
+		sys.exit(0)
 	else:
 		print("error when posting {0}".format(TITLE))
+		print(response.text)
+		sys.exit(1)
+
+# update post
+def update_post(fileName, postVersion, content, TITLE, headers):
+	postID = query_id(TITLE)
+	newVersion = postVersion + 1
+	update_link = baseLink + "/rest/api/content/" + postID
+	data = {'version':{'number': newVersion}, 'title': fileName, 'type': 'page','body':{'storage':{'value': content,'representation':'storage'}}}
+	response = requests.put(update_link, auth=(USER, PASSWORD), data=json.dumps(data), headers=headers)
+	if response.status_code == requests.codes.ok:
+		print("{0} successfully updated".format(TITLE))
+		sys.exit(0)
+	else:
+		print("error when updating {0}".format(TITLE))
 		print(response.text)
 		sys.exit(1)
 
@@ -135,3 +170,5 @@ if __name__=="__main__":
 				post_doc(filename, parentID)
 	else:
 		post_doc(TITLE, parentID)
+
+	# print query_version(TITLE)
