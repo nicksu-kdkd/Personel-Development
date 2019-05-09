@@ -1,20 +1,20 @@
 import requests, json
-import sys, re, subprocess, os
+import sys, re, os
 import argparse
-import markdown
+import markdown, plantuml
 
 # query the page link for reference
-def query_link(TITLE):
-	return(baseLink + "/display/" + SPACE + "/" + TITLE.split('.')[0])
+def query_link(docPath):
+	return(baseLink + "/display/" + spaceID + "/" + docPath.split('.')[0])
 
 # query the page id
-def query_id(TITLE):
+def query_id(docPath):
 	query_link = baseLink + "/rest/api/content/"
 	params = (
-	    ('title', TITLE.split('.')[0]),
-	    ('spaceKey', SPACE),
+	    ('title', docPath.split('.')[0]),
+	    ('spaceKey', spaceID),
 	)
-	response = requests.get(query_link, params=params, auth=(USER, PASSWORD))
+	response = requests.get(query_link, params=params, auth=(user, password))
 	try:
 		ID = json.loads(response.content)['results'][0]['id']
 	except:
@@ -22,14 +22,14 @@ def query_id(TITLE):
 	return ID
 
 # query version
-def query_version(TITLE):
+def query_version(docPath):
 	query_link = baseLink + "/rest/api/content/"
 	params = (
-	    ('title', TITLE.split('.')[0]),
-	    ('spaceKey', SPACE),
+	    ('title', docPath.split('.')[0]),
+	    ('spaceKey', spaceID),
 	    ('expand', 'version'),
 	)
-	response = requests.get(query_link, params=params, auth=(USER, PASSWORD))
+	response = requests.get(query_link, params=params, auth=(user, password))
 	try:
 		VERSION = json.loads(response.content)['results'][0]['version']['number']
 	except:
@@ -41,74 +41,74 @@ def query_version(TITLE):
 	return VERSION, appVer
 
 # post attachment
-def post_attachment(TITLE):
+def post_attachment(docPath):
 	post_link = baseLink + "/rest/api/content/{0}/child/attachment".format(attachmentID)
 	headers = {
 		'X-Atlassian-Token': 'nocheck',
 	}
 	files = {
-    	'file': ('{0}'.format(TITLE.split('.')[0]), open(TITLE, 'rb')),
+    	'file': ('{0}'.format(docPath.split('.')[0]), open(docPath, 'rb')),
 	}
-	response = requests.post(post_link, auth=(USER, PASSWORD), files=files, headers=headers)
+	response = requests.post(post_link, auth=(user, password), files=files, headers=headers)
 	return(response.status_code)
 
 # post doc
-def post_doc(TITLE, parentID, appVer):
-	fileName = TITLE.split('.')[0]
+def post_doc(docPath, parentID, appVer, user, password):
+	fileName = docPath.split('.')[0]
 	post_link = baseLink + "/rest/api/content/"
 	headers = {
 	    'Content-Type': 'application/json',
 	}
-	content = parse_md(TITLE)
+	content = parse_md(docPath)
 	if fileName == "SUMMARY":
 		pivot = re.compile('\w+\.\w+')
 		for i in re.findall(pivot, content):
 			url = query_link(i)
 			content = re.sub(i,url,content)
 	content = content + "<p>Version=" + appVer + "</p>"
-	postID = query_id(TITLE)
-	postVersion, appPostVer = query_version(TITLE)
+	postID = query_id(docPath)
+	postVersion, appPostVer = query_version(docPath)
 	if appVer == appPostVer:
 		print("The version already exist, the page will not post or update")
 		sys.exit(2)
 	if postVersion != 0:
-		update_post(postID, fileName, postVersion, content, TITLE, SPACE, headers, appVer)
+		update_post(postID, fileName, postVersion, content, docPath, spaceID, headers, appVer, user, password)
 	else:
 		if parentID:
-			data = {'version':{'number': 1, 'message': appVer}, 'type':'page','title':fileName,'ancestors':[{'type':'page','id':parentID}],'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
+			data = {'version':{'number': 1, 'message': appVer}, 'type':'page','title':fileName,'ancestors':[{'type':'page','id':parentID}],'space':{'key':spaceID},'body':{'storage':{'value': content,'representation':'storage'}}}
 		else:
-			data = {'version':{'number': 1, 'message': appVer}, 'type':'page','title':fileName,'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
-		response = requests.post(post_link, auth=(USER, PASSWORD), data=json.dumps(data), headers=headers)
+			data = {'version':{'number': 1, 'message': appVer}, 'type':'page','title':fileName,'space':{'key':spaceID},'body':{'storage':{'value': content,'representation':'storage'}}}
+		response = requests.post(post_link, auth=(user, password), data=json.dumps(data), headers=headers)
 		if response.status_code == requests.codes.ok:
-			print("{0} successfully posted".format(TITLE))
+			print("{0} successfully posted".format(docPath))
 			print(response.text)
 		else:
-			print("error when posting {0}".format(TITLE))
+			print("error when posting {0}".format(docPath))
 			print(response.text)
 			sys.exit(1)
 
 # update post
-def update_post(postID, fileName, postVersion, content, TITLE, SPACE, headers, appVer):
+def update_post(postID, fileName, postVersion, content, docPath, spaceID, headers, appVer, user, password):
 	newVersion = postVersion + 1
 	update_link = baseLink + "/rest/api/content/" + postID
 	data = {'version':{'number': newVersion, 'message': appVer}, 'title': fileName, 'type': 'page','body':{'storage':{'value': content,'representation':'storage'}}}
-	response = requests.put(update_link, auth=(USER, PASSWORD), data=json.dumps(data), headers=headers)
+	response = requests.put(update_link, auth=(user, password), data=json.dumps(data), headers=headers)
 	if response.status_code == requests.codes.ok:
-		print("{0} successfully updated".format(TITLE))
+		print("{0} successfully updated".format(docPath))
 		print(response.text)
 	else:
-		print("error when updating {0}".format(TITLE))
+		print("error when updating {0}".format(docPath))
 		print(response.text)
 		sys.exit(1)
 
 # transform markdown to xhtml
-def to_html(CONTENT):
-	html = markdown.markdown(CONTENT, ['extra'])
+def to_html(content):
+	html = markdown.markdown(content, ['extra'])
 	return(html)
 	
 # parse makrdown and render uml
-def parse_md(TITLE):
-	f = open(TITLE,'r')
+def parse_md(docPath):
+	f = open(docPath,'r')
 	startuml = re.compile('{% plantuml %}')
 	enduml = re.compile('{% endplantuml %}')
 	pivot = []
@@ -116,7 +116,7 @@ def parse_md(TITLE):
 	newstr = ''
 	content = f.read().splitlines() 
 	f.close()
-	fileName = TITLE.split('.')[0]
+	fileName = docPath.split('.')[0]
 	# render uml
 	for line in range(len(content)):
 		if re.match(startuml, content[line]):
@@ -126,12 +126,11 @@ def parse_md(TITLE):
 	if len(pivot) % 2 == 0:	
 		for i in range(0,len(pivot),2):
 			fileName = "uml-{0}-{1}".format(fileName, i)
-			wf = open(fileName,'w+')
+			umlFile = open(fileName,'w+')
 			for line in content[pivot[i]+1:pivot[i+1]]:
-				wf.write(line+"\n")
-			wf.close()
-			cmd="python -m plantuml {0}".format(fileName)
-			ret = subprocess.call(cmd, shell=True)
+				umlFile.write(line+"\n")
+			umlFile.close()
+			plantuml.PlantUML().processes_file(fileName)
 			post_attachment(fileName+".png")
 	elif len(pivot) == 0:
 		print "no uml embed"
@@ -159,21 +158,21 @@ if __name__=="__main__":
 	parser.add_argument('--space', type=str, default=None)
 	parser.add_argument('--parent', type=str, default=None)
 	parser.add_argument('--ver', type=str, default=None)
-
+	parser.add_argument('--attachID', type=str, default=88372205)
 
 	args = parser.parse_args()
-	USER = args.user
-	PASSWORD = args.passwd
-	TITLE = args.title
-	SPACE = args.space
+	user = args.user
+	password = args.passwd
+	docPath = args.title
+	spaceID = args.space
 	appVer = args.ver
 	parentID = args.parent
-	attachmentID = "88372205"
+	attachmentID = args.attachID
 	baseLink = "https://issuetracking.maaii.com:9443"
 
-	if os.path.isdir(TITLE):
-		for filename in os.listdir(TITLE):
+	if os.path.isdir(docPath):
+		for filename in os.listdir(docPath):
 			if filename.endswith(".md"):
-				post_doc(filename, parentID, appVer)
+				post_doc(filename, parentID, appVer, user, password)
 	else:
-		post_doc(TITLE, parentID, appVer)
+		post_doc(docPath, parentID, appVer)
