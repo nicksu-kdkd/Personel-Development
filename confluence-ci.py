@@ -68,18 +68,18 @@ def post_doc(TITLE, parentID):
 	postVersion = query_version(TITLE)
 	if postVersion != 0:
 		update_post(fileName, postVersion, content, TITLE, headers)
-	if parentID:
-		data = {'type':'page','title':fileName,'ancestors':[{'type':'page','id':parentID}],'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
 	else:
-		data = {'type':'page','title':fileName,'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
-	response = requests.post(post_link, auth=(USER, PASSWORD), data=json.dumps(data), headers=headers)
-	if response.status_code == requests.codes.ok:
-		print("{0} successfully posted".format(TITLE))
-		sys.exit(0)
-	else:
-		print("error when posting {0}".format(TITLE))
-		print(response.text)
-		sys.exit(1)
+		if parentID:
+			data = {'type':'page','title':fileName,'ancestors':[{'type':'page','id':parentID}],'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
+		else:
+			data = {'type':'page','title':fileName,'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
+		response = requests.post(post_link, auth=(USER, PASSWORD), data=json.dumps(data), headers=headers)
+		if response.status_code == requests.codes.ok:
+			print("{0} successfully posted".format(TITLE))
+		else:
+			print("error when posting {0}".format(TITLE))
+			print(response.text)
+			sys.exit(1)
 
 # update post
 def update_post(fileName, postVersion, content, TITLE, headers):
@@ -90,7 +90,6 @@ def update_post(fileName, postVersion, content, TITLE, headers):
 	response = requests.put(update_link, auth=(USER, PASSWORD), data=json.dumps(data), headers=headers)
 	if response.status_code == requests.codes.ok:
 		print("{0} successfully updated".format(TITLE))
-		sys.exit(0)
 	else:
 		print("error when updating {0}".format(TITLE))
 		print(response.text)
@@ -166,9 +165,9 @@ if __name__=="__main__":
 
 	if os.path.isdir(TITLE):
 		for filename in os.listdir(TITLE):
+			print filename
 			if filename.endswith(".md"):
+				print filename
 				post_doc(filename, parentID)
 	else:
 		post_doc(TITLE, parentID)
-
-	# print query_version(TITLE)
