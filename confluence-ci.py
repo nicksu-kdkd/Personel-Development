@@ -165,9 +165,7 @@ if __name__=="__main__":
 
 	if os.path.isdir(TITLE):
 		for filename in os.listdir(TITLE):
-			print filename
 			if filename.endswith(".md"):
-				print filename
 				post_doc(filename, parentID)
 	else:
 		post_doc(TITLE, parentID)
