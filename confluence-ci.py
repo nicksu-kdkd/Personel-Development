@@ -65,6 +65,7 @@ def post_doc(TITLE, parentID, appVer):
 		for i in re.findall(pivot, content):
 			url = query_link(i)
 			content = re.sub(i,url,content)
+	content = content + "<p>Version=" + appVer + "</p>"
 	postID = query_id(TITLE)
 	postVersion, appPostVer = query_version(TITLE)
 	if appVer == appPostVer:
@@ -74,12 +75,13 @@ def post_doc(TITLE, parentID, appVer):
 		update_post(postID, fileName, postVersion, content, TITLE, SPACE, headers, appVer)
 	else:
 		if parentID:
-			data = {'type':'page','title':fileName,'ancestors':[{'type':'page','id':parentID}],'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
+			data = {'version':{'number': 1, 'message': appVer}, 'type':'page','title':fileName,'ancestors':[{'type':'page','id':parentID}],'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
 		else:
-			data = {'type':'page','title':fileName,'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
+			data = {'version':{'number': 1, 'message': appVer}, 'type':'page','title':fileName,'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
 		response = requests.post(post_link, auth=(USER, PASSWORD), data=json.dumps(data), headers=headers)
 		if response.status_code == requests.codes.ok:
 			print("{0} successfully posted".format(TITLE))
+			print(response.text)
 		else:
 			print("error when posting {0}".format(TITLE))
 			print(response.text)
@@ -93,6 +95,7 @@ def update_post(postID, fileName, postVersion, content, TITLE, SPACE, headers, a
 	response = requests.put(update_link, auth=(USER, PASSWORD), data=json.dumps(data), headers=headers)
 	if response.status_code == requests.codes.ok:
 		print("{0} successfully updated".format(TITLE))
+		print(response.text)
 	else:
 		print("error when updating {0}".format(TITLE))
 		print(response.text)
