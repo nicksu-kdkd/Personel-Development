@@ -37,7 +37,7 @@ def post_attachment(TITLE):
 	return(response.status_code)
 
 # post doc
-def post_doc(TITLE):
+def post_doc(TITLE, parentID):
 	fileName = TITLE.split('.')[0]
 	post_link = baseLink + "/rest/api/content/"
 	headers = {
@@ -49,7 +49,10 @@ def post_doc(TITLE):
 		for i in re.findall(pivot, content):
 			url = query_link(i)
 			content = re.sub(i,url,content)
-	data = {'type':'page','title':fileName,'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
+	if parentID:
+		data = {'type':'page','title':fileName,'ancestors':[{'type':'page','id':parentID}],'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
+	else:
+		data = {'type':'page','title':fileName,'space':{'key':SPACE},'body':{'storage':{'value': content,'representation':'storage'}}}
 	response = requests.post(post_link, auth=(USER, PASSWORD), data=json.dumps(data), headers=headers)
 	if response.status_code == requests.codes.ok:
 		print("{0} successfully posted".format(TITLE))
@@ -60,7 +63,7 @@ def post_doc(TITLE):
 
 # transform markdown to xhtml
 def to_html(CONTENT):
-	html = markdown.markdown(CONTENT)
+	html = markdown.markdown(CONTENT, extensions=['markdown.extensions.tables', 'markdown.extensions.fenced_code', 'markdown.extensions.sane_lists'])
 	return(html)
 	
 # parse makrdown and render uml
@@ -114,19 +117,21 @@ if __name__=="__main__":
 	parser.add_argument('--passwd', type=str, default=123456)
 	parser.add_argument('--title', type=str, default=None)
 	parser.add_argument('--space', type=str, default="~nicksu")
+	parser.add_argument('--parent', type=str, default=None)
+
 
 	args = parser.parse_args()
 	USER = args.user
 	PASSWORD = args.passwd
 	TITLE = args.title
 	SPACE = args.space
+	parentID = args.parent
 	attachmentID = "88372205"
 	baseLink = "https://issuetracking.maaii.com:9443"
 
 	if os.path.isdir(TITLE):
 		for filename in os.listdir(TITLE):
 			if filename.endswith(".md"):
-				post_doc(filename)
+				post_doc(filename, parentID)
 	else:
-		post_doc(TITLE)
-	# delete_doc(TITLE)
+		post_doc(TITLE, parentID)

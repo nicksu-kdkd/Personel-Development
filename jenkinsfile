@@ -1,0 +1,16 @@
+pipeline {
+    agent { label 'jenkins-nodejs-8' }
+
+    environment {
+        USER_CREDENTIALS = credentials('nicksutest')
+    }
+
+    stages {
+        stage('Run') {
+            steps {
+                sh "git log --name-only -1  --pretty=''"
+                sh "python confluence-ci.py --title TILE --user $USER_CREDENTIALS_USR --passwd $USER_CREDENTIALS_PSW"
+            }
+        }
+    }
+}

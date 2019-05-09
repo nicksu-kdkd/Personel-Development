@@ -99,3 +99,4 @@ else
 fi
 
 echo "All the prepartion tasks are done , you can start your client now"
+delete
