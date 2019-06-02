@@ -1,0 +1,26 @@
+image: deployment:latest
+
+stages:
+  - test
+  - deploy
+
+variables:
+  SSH_KNOWN_HOSTS: "|1|D+/sowQtr1cCHcA87MiNKTRAUd4=|CPYRu0IZ9IsNxzMSazhvEy4dGDs= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIu8N6R3LWw1gkNQjySFpXJN4MGmoGtb5fA9JMA3HEOJZx8xdsobDPsV9ZET+aS7PMT3pz19mcCDbfViYQToIUY="
+  SCRIPT_PAHT: "/ansible-home"
+
+# before_script:
+#   - mkdir -p ~/.ssh
+#   - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+#   - chmod 400 ~/.ssh/known_hosts
+#   - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+
+syntax check:
+  stage: test
+  script: 
+    - apt-get install wget
+    - wget http://gitlab.home.kd/root/ansible-home/-/archive/master/ansible-home-master.tar && tar -xvf ansible-home-master.tar 
+    - ansible-playbook -i host/main main.yml --syntax-check
+
+deploy to myk8master:
+  stage: deploy
+  script: ansible-playbook -i host/main main.yml --limit myk8master --diff

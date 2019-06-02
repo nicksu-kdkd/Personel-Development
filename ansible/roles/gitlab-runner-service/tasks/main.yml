@@ -1,0 +1,46 @@
+- name: install prerequirements
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - gnupg
+    - debian-archive-keyring
+    - apt-transport-https
+
+- name: import gitlab key
+  apt_key:
+    url: https://packages.gitlab.com/runner/gitlab-runner/gpgkey
+    state: present
+
+- name: create gitlab-runner repo
+  apt_repository:
+    repo: deb https://packages.gitlab.com/runner/gitlab-runner/debian/ stretch main
+    state: present
+    filename: gitlab-runner
+
+- name: install gitlab-runner
+  apt:
+    name: gitlab-runner
+    state: present
+    update_cache: yes
+
+# - name: prepare gitlab-ce volumes
+#   file:
+#     path: "{{ item }}"
+#     state: directory
+#     recurse: yes
+#     owner: root
+#     group: docker
+#   with_items:
+#     - /srv/gitlab-runner/config   
+
+# - name: start gitlab runner 
+#   docker_container:
+#     name: "{{ runner_hostname }}"
+#     image: gitlab/gitlab-runner
+#     hostname: "{{ runner_hostname }}"
+#     restart: yes
+#     restart_policy: always
+    volumes:
+      - /srv/gitlab-runner/config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock

@@ -1,0 +1,3 @@
+- name: change timezone to Asia/Hong_Kong
+  timezone:
+    name: "{{ default_timezone }}"

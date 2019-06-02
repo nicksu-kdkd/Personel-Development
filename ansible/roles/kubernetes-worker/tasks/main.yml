@@ -1,0 +1,164 @@
+- name: stop swap
+  command: swapoff -a
+
+- name: disable swap
+  lineinfile:
+    dest: /etc/fstab
+    regexp: '(.* swap .*)'
+    line: '# \1'
+    backrefs: yes
+    state: present
+
+- name: install require packages
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+  with_items:
+    - socat
+    - conntrack
+    - ipset
+    - rsync
+
+- name: tell the certs exists or not
+  stat:
+    path: "/home/nick/k8certs/{{ ansible_hostname }}.pem"
+  register: certs
+
+- name: prepare worker nodes certs
+  include: prepareWorker.yml
+  when: certs.stat == false
+  delegated_to: x79
+
+- name: prepare container runtime
+  include: containerd.yml
+  when: container_env == "containerd"
+
+- name: create folder
+  file:
+    state: directory
+    owner: root
+    group: root
+    path: "{{ item }}"
+  with_items:
+    - /etc/cni/net.d
+    - /opt/cni/bin
+    - /var/lib/kubelet
+    - /var/lib/kube-proxy
+    - /var/lib/kubernetes 
+    - /var/run/kubernetes
+
+- name: copy kubernetes binarys
+  synchronize:
+    src: "/home/nick/Downloads/{{ item }}"
+    dest: /usr/local/bin/
+  with_items:
+    - kubectl
+    - kube-proxy
+    - kubelet
+
+- name: allow execution on kubernetes binarys
+  file:
+    path: /usr/local/bin/{{ item }}
+    owner: root
+    group: root
+    mode: "+x"
+  with_items:
+    - kubectl
+    - kube-proxy
+    - kubelet
+
+- name: copy cni plugins
+  synchronize:
+    src: "/home/nick/Downloads/cnibin/{{ item }}"
+    dest: /opt/cni/bin
+  with_items:
+    - bridge
+    - dhcp
+    - flannel
+    - host-local
+    - ipvlan
+    - loopback
+    - macvlan
+    - portmap
+    - ptp
+    - sample
+    - tuning
+    - vlan
+
+- name: allow execution on cni plugins
+  file:
+    path: /opt/cni/bin/{{ item }}
+    owner: root
+    group: root
+    mode: "+x"
+  with_items:
+    - bridge
+    - dhcp
+    - flannel
+    - host-local
+    - ipvlan
+    - loopback
+    - macvlan
+    - portmap
+    - ptp
+    - sample
+    - tuning
+    - vlan
+
+- name: configure cni network
+  template:
+    src: "{{ item }}.j2"
+    dest: /etc/cni/net.d/{{ item }}
+  with_items:
+    - 20-bridge.conf
+    - 99-loopback.conf
+
+- name: configure kubelet
+  template:
+    src: kubelet-config.yaml.j2
+    dest: /var/lib/kubelet/kubelet-config.yaml
+
+- name: copy kubelet.kubeconfig
+  copy:
+    src: "{{ ansible_hostname }}.kubeconfig"
+    dest: /var/lib/kubelet/kubeconfig
+
+- name: configure kube-proxy
+  template:
+    src: kube-proxy-config.yaml.j2
+    dest: /var/lib/kube-proxy/kube-proxy-config.yaml
+
+- name: copy kube-proxy.kubeconfig
+  copy:
+    src: kube-proxy.kubeconfig
+    dest: /var/lib/kube-proxy/kubeconfig
+
+- name: configure kubelet and kube-proxy service
+  template:
+    src: "{{ item }}.j2"
+    dest: /etc/systemd/system/{{ item }}
+  with_items:
+    - kubelet.service
+    - kube-proxy.service
+  notify:
+    - systemd reload
+
+- name: enable services at boot time
+  file:
+    src: /etc/systemd/system/{{ item }}
+    dest: /etc/systemd/system/multi-user.target.wants/{{ item }}
+    owner: root
+    group: root
+    state: link
+  with_items:
+    - kubelet.service
+    - kube-proxy.service
+
+- name: start kubelet and kube-proxy
+  systemd:
+    name: "{{ item }}"
+    state: started
+  with_items:
+    - kubelet.service
+    - kube-proxy.service
+

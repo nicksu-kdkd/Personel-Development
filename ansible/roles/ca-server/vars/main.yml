@@ -1,0 +1,4 @@
+CFSSL_URL: "https://pkg.cfssl.org/R1.2/cfssl_linux-amd64"
+CFSSLJSON_URL: "https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64"
+BIN_PATH: "/usr/local/bin"
+CERT_DIR: "/etc/ca_certs"

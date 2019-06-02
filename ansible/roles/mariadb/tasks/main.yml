@@ -1,0 +1,4 @@
+- name: run database
+  include: database.yml
+  delegate_to: "{{ db_dependency.db_host }}"
+  when: db_dependency is defined

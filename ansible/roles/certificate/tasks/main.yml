@@ -1,0 +1,38 @@
+- name: create certs dir
+  file:
+    state: directory
+    path: "{{ cert_dir }}"
+    mode: 0755
+    owner: root
+    group: root 
+
+- name: copy certificate
+  copy:
+    src: "{{ item }}"
+    dest: "{{ cert_dir }}"
+  with_items:
+    - admin-key.pem
+    - admin.pem
+    - ca-key.pem
+    - ca.pem
+    - kube-controller-manager-key.pem
+    - kube-controller-manager.pem
+    - kube-proxy-key.pem
+    - kube-proxy.pem
+    - kube-scheduler-key.pem
+    - kube-scheduler.pem
+    - kubernetes-key.pem
+    - kubernetes.pem
+    - service-account-key.pem
+    - service-account.pem
+  when: k8type == "master"
+
+- name: copy certificate
+  copy:
+    src: "{{ item }}"
+    dest: "{{ cert_dir }}"
+  with_items:
+    - "{{ ansible_hostname }}-key.pem"
+    - "{{ ansible_hostname }}.pem"
+    - ca.pem
+  when: k8type == "worker"

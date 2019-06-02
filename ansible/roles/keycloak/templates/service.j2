@@ -1,0 +1,10 @@
+[Unit]
+Description=Keycloak Standalone
+
+[Service]
+Type=idle
+User={{ app_user }}
+ExecStart={{ app_path }}/bin/standalone.sh -c standalone.xml -b {{ ansible_host }} 
+
+[Install]
+Alias=keycloak

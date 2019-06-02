@@ -1,0 +1,35 @@
+[Unit]
+Description=Etcd Server
+Documentation=https://github.com/coreos/etcd
+After=network.target
+
+
+[Service]
+User=root
+Type=notify
+ExecStart=/usr/bin/etcd \
+  --name {{ etcd_name }} \
+  --cert-file={{ kubernetes_cert }} \
+  --key-file={{ kubernetes_key }} \
+  --peer-cert-file={{ kubernetes_cert }} \
+  --peer-key-file={{ kubernetes_key }} \
+  --trusted-ca-file={{ ca_cert }} \
+  --peer-trusted-ca-file={{ ca_cert }} \
+  --peer-client-cert-auth \
+  --client-cert-auth \
+  --initial-advertise-peer-urls https://{{ brodcast_ip }}:2380 \
+  --listen-peer-urls https://{{ brodcast_ip }}:2380 \
+  --listen-client-urls https://{{ brodcast_ip }}:2379,https://127.0.0.1:2379 \
+  --advertise-client-urls https://{{ brodcast_ip }}:2379 \
+  {% if (cluster == 'y') %}
+  --initial-cluster-token etcd-cluster-0 \
+  --initial-cluster controller-0=https://10.240.0.10:2380,controller-1=https://10.240.0.11:2380,controller-2=https://10.240.0.12:2380 \
+  --initial-cluster-state new \
+  {% endif %}
+  --data-dir={{ etcd_datadir }}
+Restart=on-failure
+RestartSec=10s
+LimitNOFILE=40000
+
+[Install]
+WantedBy=multi-user.target

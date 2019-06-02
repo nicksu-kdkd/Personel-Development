@@ -1,0 +1,30 @@
+all:
+  hosts:
+    x79.home.kd:
+      ansible_connection: local
+  children:
+    keycloak:
+      hosts:
+        keycloak1.home.kd:
+          ansible_host: 192.168.1.113
+          ansible_user: root
+        # keycloak2.home.kd:
+        #   ansible_host: 192.168.1.114
+        #   ansible_user: root
+      vars:
+        app_port: 8080
+        app_name: keycloak-6.0.1.tar.gz
+        db_host: '{{ hostvars["db1.home.kd"].ansible_host }}'
+        app_user: keycloak
+
+    database:
+      hosts:
+        db1.home.kd:
+          ansible_host: 192.168.1.114
+          ansible_user: root
+  vars:
+    download_link: http://192.168.1.1/downloads
+    app_user: "{{ role_name }}"
+    app_group: "{{ role_name }}"
+    generic_path: /opt
+    app_password: password  

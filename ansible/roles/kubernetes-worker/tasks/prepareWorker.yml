@@ -1,0 +1,48 @@
+- name: prepare csr.json
+  template:
+    src: node-csr.json
+    dest: "/home/nick/k8certs/{{ ansible_hostname }}-csr.json"
+
+- name: create certs
+  shell: |
+    cfssl gencert \
+    -ca=ca.pem \
+    -ca-key=ca-key.pem \
+    -config=ca-config.json \
+    -hostname=$node,$ip \
+    -profile=kubernetes \
+    $node-csr.json | cfssljson -bare $node
+
+- name: copy certs
+  copy:
+    src: /home/nick/k8certs/"{{ item }}"
+    dest: /home/nick/Dev/ansible-home/roles/certificate/files/
+  with_items:
+    - "{{ ansible_hostname }}-key.pem"
+    - "{{ ansible_hostname }}.pem"
+
+- name: create node.kubeconfig
+  shell: |
+    kubectl config set-cluster {{ cluster_name }} \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://{{ brodcast_ip }}:6443 \
+    --kubeconfig=$node.kubeconfig
+
+    kubectl config set-credentials system:node:{{ ansible_hostname }} \
+    --client-certificate={{ ansible_hostname }}.pem \
+    --client-key={{ ansible_hostname }}-key.pem \
+    --embed-certs=true \
+    --kubeconfig={{ ansible_hostname }}.kubeconfig
+
+    kubectl config set-context default \
+    --cluster=$cluster \
+    --user=system:node:{{ ansible_hostname }} \
+    --kubeconfig={{ ansible_hostname }}.kubeconfig
+
+    kubectl config use-context default --kubeconfig={{ ansible_hostname }}.kubeconfig
+
+- name: copy kubeconfig
+  copy:
+    src: /home/nick/k8certs/"{{ ansible_hostname }}.kubeconfig"
+    dest: /home/nick/Dev/ansible-home/roles/kubernets-worker/files/

@@ -1,0 +1,2 @@
+kubeconfig_dir: /var/lib/kubernetes
+kubeconf_dir: /etc/kubernetes

@@ -1,0 +1,4 @@
+app_path: "{{ generic_path }}/{{ role_name }}"
+requirements:
+  - openjdk-8-jre
+db_module: mariadb-jdbc.jar

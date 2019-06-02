@@ -1,0 +1,49 @@
+- name: install requirements
+  apt:
+    name: "{{ requirements }}"
+    state: present
+
+- name: Add an apt key for mariadb source
+  apt_key:
+    keyserver: keyserver.ubuntu.com 
+    id: "0xF1656F24C74CD1D8"
+
+- name: create mariadb source
+  apt_repository:
+    repo: "deb [arch=amd64,i386,ppc64el] http://mirrors.tuna.tsinghua.edu.cn/mariadb/repo/10.3/debian stretch main"
+    state: present
+    filename: mariadb-tsinghua
+
+- name: install mariadb
+  apt:
+    name: mariadb-server
+    state: latest
+
+- name: config mysql listen on external ip
+  lineinfile:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    regexp: '^bind-address.*'
+    line: bind-address = {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
+
+- name: enable and start mariadb
+  systemd:
+    name: mariadb
+    enabled: true
+    state: started
+
+- name: Create a new database
+  mysql_db:
+    name: "{{ db_dependency.name }}"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  when: db_dependency is defined
+
+- name: Create database user 
+  mysql_user:
+    name: "{{ db_dependency.user }}"
+    password: "{{ db_dependency.password }}"
+    priv: '{{ db_dependency.name }}.*:ALL'
+    host: "{{ db_dependency.host }}"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  when: db_dependency is defined

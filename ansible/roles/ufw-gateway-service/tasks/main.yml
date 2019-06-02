@@ -1,0 +1,41 @@
+- name: enable forward of kernel
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1 
+    state: present
+    reload: yes 
+    sysctl_set: yes
+    
+- name: install prerequisites
+  apt:
+    name: ufw
+    state: present
+
+- name: enable forward of ufw
+  lineinfile:
+    path: /etc/default/ufw
+    regexp: "^DEFAULT_FORWARD_POLICY="
+    line: "DEFAULT_FORWARD_POLICY=ACCEPT"
+  notify:
+    - restart ufw service
+
+- name: enable chain forward
+  blockinfile:
+    path: /etc/ufw/before.rules
+    insertafter: "^COMMIT"
+    block: |
+      # NAT table rules
+      *nat
+      :POSTROUTING ACCEPT [0:0]
+
+      # Forward traffic through eth0 - Change to match you out-interface
+      -A POSTROUTING -o {{ out_if }} -j MASQUERADE
+
+      # Accept forwarding traffic
+      -A FORWARD -i {{ in_if }} -o {{ out_if }} -j ACCEPT
+
+      # don't delete the 'COMMIT' line or these nat table rules won't
+      # be processed
+      COMMIT# NAT table rules *nat :POSTROUTING ACCEPT [0:0] 
+  notify:
+    - restart ufw service

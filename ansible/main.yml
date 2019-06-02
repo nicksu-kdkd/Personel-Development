@@ -1,0 +1,75 @@
+- hosts: all
+  remote_user: root
+
+  roles:
+    - { role: apt-repo }
+    - { role: timezone }
+
+- hosts: x79
+  become: true
+
+  roles:
+    - { role: docker-service,
+        docker_user: "nick" }
+    - { role: gitlab-docker-service }
+    - { role: gitlab-runner-service }
+
+- hosts: k8
+  remote_user: root
+
+  roles:
+    - { role: k8hosts }
+    - { role: certificate }
+    
+- hosts: k8master
+  remote_user: root
+
+  vars:
+    brodcast_ip: "192.168.1.111"
+    cluster_name: "my-k8s"
+    cidr: "9.0.0.0/16"
+    cluster_ip_range: "10.32.0.0/24"
+    cert_dir: "/etc/k8certs"
+    kubernetes_cert: "/etc/k8certs/kubernetes.pem"
+    kubernetes_key: "/etc/k8certs/kubernetes-key.pem"
+    ca_cert: "/etc/k8certs/ca.pem"
+    ca_key: "/etc/k8certs/ca-key.pem"
+    service_account_key: "/etc/k8certs/service-account-key.pem"
+    service_account_cert: "/etc/k8certs/service-account.pem"
+
+  roles:
+    - { role: etcd-service }
+    - { role: kubernetes-master }
+
+- hosts: k8workers
+  remote_user: root
+  vars:
+    cluster_name: "my-k8s"
+    brodcast_ip: "192.168.1.111"
+    cidr: "9.0.0.0/16"
+    cluster_ip_range: "10.32.0.0/24"
+    cert_dir: "/etc/k8certs"
+
+  roles:
+    - { role: docker-service }
+    - { role: kubernetes-worker }
+
+- hosts: runner1
+  remote_user: root
+
+  roles:
+    - { role: docker-service,
+        docker_user: "gitlab-runner" }
+    - { role: gitlab-runner-service }
+
+- hosts: keycloak1.home.kd
+  remote_user: root
+
+  roles:
+    - { role: keycloak }
+
+- hosts: db1.home.kd
+  remote_user: root
+
+  roles:
+    - { role: mariadb }

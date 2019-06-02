@@ -1,0 +1,10 @@
+# NAT table rules
+*nat
+:POSTROUTING ACCEPT [0:0]
+
+# Forward traffic through eth0 - Change to match you out-interface
+-A POSTROUTING -s {{ source_range }} -o {{ out_if }} -j MASQUERADE
+
+# don't delete the 'COMMIT' line or these nat table rules won't
+# be processed
+COMMIT# NAT table rules *nat :POSTROUTING ACCEPT [0:0] 

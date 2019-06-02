@@ -1,0 +1,57 @@
+- name: install requirement
+  apt:
+    name: "{{ requirements }}"
+    state: present
+
+- name: create app dir
+  file:
+    path: "{{ app_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: download and extract keycloak
+  unarchive:
+    src: "{{ download_link }}/{{ app_name }}"
+    dest: "{{ app_path }}"
+    remote_src: yes
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    extra_opts: [--strip-components=1]
+
+- name: user create
+  user:
+    name: "{{ app_user }}"
+    comment: for {{ role_name }} management
+
+- name: create db configuration
+  include: db.yml
+  when: db_module is defined
+
+- name: create database in db
+  import_role:
+    name: mariadb
+  vars:
+    db_dependency:
+      name: '{{ app_name.split("-")[0] }}'
+      user: "{{ app_user }}"
+      password: "{{ app_password }}"
+      db_host: "{{ db_host }}"
+      host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+
+- name: create keycloak service
+  template:
+    src: service.j2
+    dest: /etc/systemd/system/keycloak.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - systemd reload
+
+- name: enable and start keycloak service
+  systemd:
+    name: keycloak.service
+    enabled: true
+    state: started

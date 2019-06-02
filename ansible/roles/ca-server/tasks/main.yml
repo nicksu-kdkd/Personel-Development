@@ -1,0 +1,32 @@
+- name: create binarys path 
+  file:
+    path: "{{ BIN_PATH }}"
+    state: directory
+
+- name: download cfssl binarys
+  get_url:
+    url: "{{ item }}"
+    dest: "{{ BIN_PATH }}/"
+    mode: 0444
+  with_items:
+    - "{{ CFSSL_URL }}"
+    - "{{ CFSSLJSON_URL }}"
+
+- name: create certificate directory
+  file:
+    path: "{{ CERT_DIR }}"
+    state: directory
+
+- name: initialize ca
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ CERT_DIR }}/{{ item }}"
+  with_items:
+    - ca-config.json
+    - ca-csr.json
+
+- name: generate ca certs
+  shell:
+    "{{ BIN_PATH }}/cfssl gencert -initca ca-csr.json | {{ BIN_PATH }}/cfssljson -bare ca -"
+  args:
+    chdir: "{{ CERT_DIR }}"

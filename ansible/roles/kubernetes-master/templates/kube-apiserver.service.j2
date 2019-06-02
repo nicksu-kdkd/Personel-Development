@@ -1,0 +1,40 @@
+[Unit]
+Description=Kubernetes API Server
+Documentation=https://github.com/kubernetes/kubernetes
+
+[Service]
+ExecStart=/usr/local/bin/kube-apiserver \
+  --advertise-address={{ brodcast_ip }} \
+  --allow-privileged=true \
+  --apiserver-count=3 \
+  --audit-log-maxage=30 \
+  --audit-log-maxbackup=3 \
+  --audit-log-maxsize=100 \
+  --audit-log-path=/var/log/audit.log \
+  --authorization-mode=Node,RBAC \
+  --bind-address=0.0.0.0 \
+  --client-ca-file={{ ca_cert }} \
+  --enable-admission-plugins=Initializers,NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota \
+  --enable-swagger-ui=true \
+  --etcd-cafile={{ ca_cert }} \
+  --etcd-certfile={{ kubernetes_cert }} \
+  --etcd-keyfile={{ kubernetes_key }} \
+  --etcd-servers=https://{{ brodcast_ip }}:2379 \
+  --event-ttl=1h \
+  --experimental-encryption-provider-config={{ kubeconfig_dir }}/encryption-config.yaml \
+  --kubelet-certificate-authority={{ ca_cert }} \
+  --kubelet-client-certificate={{ kubernetes_cert }} \
+  --kubelet-client-key={{ kubernetes_key }} \
+  --kubelet-https=true \
+  --runtime-config=api/all \
+  --service-account-key-file={{ service_account_key }} \
+  --service-cluster-ip-range={{ cluster_ip_range }} \
+  --service-node-port-range=30000-32767 \
+  --tls-cert-file={{ kubernetes_cert }} \
+  --tls-private-key-file={{ kubernetes_key }} \
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

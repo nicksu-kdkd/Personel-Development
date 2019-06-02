@@ -1,0 +1,22 @@
+- name: update hosts to contain k8 nodes
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      192.168.1.111 master.home.kd  master
+      192.168.1.121 node1.home.kd node1
+      192.168.1.122 node2.home.kd node2
+      192.168.1.123 node3.home.kd node3
+      192.168.1.124 node4.home.kd node4
+
+- name: k8 sysctl
+  template:
+    src: k8s.conf.j2
+    dest: /etc/sysctl.d/50-k8s.conf
+  notify:
+    - sysctl
+
+- name: enable systemd-resolve
+  systemd:
+    name: systemd-resolved.service
+    state: started
+    enabled: yes

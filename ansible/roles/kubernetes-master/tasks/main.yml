@@ -1,0 +1,67 @@
+- name: disable swap
+  command: swapoff -a
+
+- name: disable swap
+  lineinfile:
+    dest: /etc/fstab
+    regexp: '(.* swap .*)'
+    line: '# \1'
+    backrefs: yes
+    state: present
+
+- name: copy kubernetes binarys
+  synchronize:
+    src: "/home/nick/Downloads/{{ item }}"
+    dest: /usr/local/bin/
+  with_items:
+    - "kube-apiserver"
+    - "kubectl"
+    - "kube-scheduler"
+    - "kube-controller-manager"
+
+- name: copy configuration of kubernetes components
+  template:
+    src: "{{ item }}.yml.j2"
+    dest: "{{ kubeconf_dir }}/{{ item }}.yml"
+    owner: root
+    group: root
+  with_items:
+    - "kube-scheduler"
+
+- name: enable execution on kubernetes components
+  file:
+    path: "/usr/local/bin/{{ item }}"
+    mode: "+x"
+    owner: root
+    group: root
+  with_items:
+    - "kube-apiserver"
+    - "kubectl"
+    - "kube-scheduler"
+    - "kube-controller-manager"
+
+- name: copy kubeconfig of kubernetes components
+  copy:
+    src: "{{ item }}"
+    dest: "{{ kubeconfig_dir }}"
+  with_items:
+    - admin.kubeconfig
+    - kube-controller-manager.kubeconfig
+    - kube-proxy.kubeconfig
+    - kube-scheduler.kubeconfig
+    - encryption-config.yaml
+
+- name: create kubernetes service
+  template:
+    src: "{{ item }}.service.j2"
+    dest: /etc/systemd/system/{{ item }}.service
+    owner: root
+    group: root
+  with_items:
+    - kube-apiserver
+    - kube-scheduler
+    - kube-controller-manager
+  notify:
+    - systemd reload
+
+

@@ -1,0 +1,4 @@
+etcd_datadir: "/var/lib/etcd"
+etcd_confdir: "/etc/etcd"
+etcd_name: "myk8-etcd"
+cluster: "no"
