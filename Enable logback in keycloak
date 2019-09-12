@@ -1,0 +1,65 @@
+Enable logback in keycloak
+
+Step1: Set slf4j as logging provider in standalone.xml
+Insert below line into ${keycloak_home}/standalone/stadalone-ha.xml
+<property name="org.jboss.logging.provider" value="slf4j"/>
+
+Step2: Copy logback-classic-1.1.11.jar and logback-core-1.1.11.jar to ${keycloak_home}/modules/system/layers/base/ch/qos/logback/main/  # create the dir if not exist
+Step3: Create module.xml in ${keycloak_home}/modules/system/layers/base/ch/qos/logback/main/ and the content as below:
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="ch.qos.logback">
+    <resources>
+        <resource-root path="logback-classic-1.1.11.jar"/>
+        <resource-root path="logback-core-1.1.11.jar"/>
+    </resources>
+
+    <dependencies>
+        <module name="org.slf4j" />
+        <module name="javax.api" />
+        <module name="javax.mail.api" />
+        <module name="net.logstash.logback" />
+    </dependencies>
+</module>
+
+Step4: Tell jBoss to use log4j and logback for logging by insert below line into the dependencies section of ${keycloak_home}/modules/system/layers/base/org/jboss/logging/main/module.xml
+<module name="ch.qos.logback"/>
+
+Step5: Create logback.xml and tell java to run with "-Dlogback.configurationFile=$LOGBACK.XML.PATH"
+<configuration scan="true" scanPeriod="30 seconds">
+  <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    <destination>192.168.33.32:5000</destination>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <customFields>"keycloak":"test"</customFields>
+    </encoder>
+  </appender>
+  <root level="DEBUG">
+    <appender-ref ref="LOGSTASH" />
+  </root>
+</configuration>
+
+
+Step6: Enable logback as slf4j implementation by insert below line into the dependencies section of ${keycloak_home}/modules/system/layers/base/org/slf4j/main/module.xml
+<module name="ch.qos.logback"/>
+
+
+
+Enable logstash-logback in keycloak
+Step1: Copy logstash-logback-encoder-4.11.jar to ${keycloak_home}/modules/system/layers/base/net/logstash/logback/main/ # create the dir if not exist
+Step2: Create module.xml in ${keycloak_home}/modules/system/layers/base/net/logstash/logback/main/ and the content as below:
+
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="net.logstash.logback">
+    <resources>
+        <resource-root path="logstash-logback-encoder-4.11.jar" />
+    </resources>
+    <dependencies>
+      <module name="com.fasterxml.jackson.core.jackson-core" />
+      <module name="com.fasterxml.jackson.core.jackson-databind" />
+      <module name="ch.qos.logback"/>
+      <module name="org.slf4j" />
+    </dependencies>
+</module>
+
+
+Reference:
+https://blog.anotheria.net/devops/enable-logback-in-jboss/

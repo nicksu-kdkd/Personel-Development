@@ -4,7 +4,7 @@ import argparse
 import markdown, plantuml
 
 # query the page link for reference
-def query_link(docPath):
+def query_link(docPath, baseLink, spaceID):
 	return(baseLink + "/display/" + spaceID + "/" + docPath.split('.')[0])
 
 # query the page id
@@ -31,14 +31,14 @@ def query_version(docPath):
 	)
 	response = requests.get(query_link, params=params, auth=(user, password))
 	try:
-		VERSION = json.loads(response.content)['results'][0]['version']['number']
+		version = json.loads(response.content)['results'][0]['version']['number']
 	except:
-		VERSION = 0
+		version = 0
 	try:
 		appVer = json.loads(response.content)['results'][0]['version']['message']
-	except: 
+	except:
 		appVer = "notexist"
-	return VERSION, appVer
+	return version, appVer
 
 # post attachment
 def post_attachment(docPath):
@@ -63,13 +63,13 @@ def post_doc(docPath, parentID, appVer, user, password):
 	if fileName == "SUMMARY":
 		pivot = re.compile('\w+\.\w+')
 		for i in re.findall(pivot, content):
-			url = query_link(i)
+			url = query_link(i, baseLink, spaceID)
 			content = re.sub(i,url,content)
 	content = content + "<p>Version=" + appVer + "</p>"
 	postID = query_id(docPath)
 	postVersion, appPostVer = query_version(docPath)
 	if appVer == appPostVer:
-		print("The version already exist, the page will not post or update")
+		print("The version of {0} already exist, the page will not post or update".format(fileName))
 		sys.exit(2)
 	if postVersion != 0:
 		update_post(postID, fileName, postVersion, content, docPath, spaceID, headers, appVer, user, password)
@@ -105,7 +105,7 @@ def update_post(postID, fileName, postVersion, content, docPath, spaceID, header
 def to_html(content):
 	html = markdown.markdown(content, ['extra'])
 	return(html)
-	
+
 # parse makrdown and render uml
 def parse_md(docPath):
 	f = open(docPath,'r')
@@ -114,7 +114,7 @@ def parse_md(docPath):
 	pivot = []
 	delist = []
 	newstr = ''
-	content = f.read().splitlines() 
+	content = f.read().splitlines()
 	f.close()
 	fileName = docPath.split('.')[0]
 	# render uml
@@ -123,7 +123,7 @@ def parse_md(docPath):
 			pivot.append(line)
 		elif re.match(enduml, content[line]):
 			pivot.append(line)
-	if len(pivot) % 2 == 0:	
+	if len(pivot) % 2 == 0:
 		for i in range(0,len(pivot),2):
 			fileName = "uml-{0}-{1}".format(fileName, i)
 			umlFile = open(fileName,'w+')
@@ -132,9 +132,6 @@ def parse_md(docPath):
 			umlFile.close()
 			plantuml.PlantUML().processes_file(fileName)
 			post_attachment(fileName+".png")
-	elif len(pivot) == 0:
-		print "no uml embed"
-		sys.exit(0)
 	else:
 		print "uml embed format error"
 		sys.exit(2)
@@ -150,7 +147,7 @@ def parse_md(docPath):
 	return(to_html(newstr))
 
 if __name__=="__main__":
-	
+
 	parser = argparse.ArgumentParser(description='post markdown to confluence')
 	parser.add_argument('--user', type=str, default="nick")
 	parser.add_argument('--passwd', type=str, default=123456)
@@ -167,12 +164,12 @@ if __name__=="__main__":
 	spaceID = args.space
 	appVer = args.ver
 	parentID = args.parent
-	attachmentID = args.attachID
+	attachmentID = str(args.attachID)
 	baseLink = "https://issuetracking.maaii.com:9443"
 
 	if os.path.isdir(docPath):
 		for filename in os.listdir(docPath):
-			if filename.endswith(".md"):
+			if filename.endswith(".md") and not filename.startswith("."):
 				post_doc(filename, parentID, appVer, user, password)
 	else:
-		post_doc(docPath, parentID, appVer)
+		post_doc(docPath, parentID, appVer, user, password)
