@@ -28,9 +28,6 @@ def get_artifact_version(artifactID, repo):
 
 
 if __name__=="__main__":
-	base_url = "http://artifactory.dev.maaii.com:8081/artifactory/api/"
-	token = "eyJ2ZXIiOiIyIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYiLCJraWQiOiJzNzF2VjJscjlzeVJaTjNpdmpzajl0MGc3Q2JiaURock45dDFCZGp5T2w0In0.eyJzdWIiOiJqZi1hcnRpZmFjdG9yeUA0ZWE5OTQzMS03M2I3LTQ5M2YtOGJmMi1mZTg4YmQyZTMxZjFcL3VzZXJzXC9uaWNrc3UiLCJzY3AiOiJtZW1iZXItb2YtZ3JvdXBzOmV2ZXJ5b25lLGRldm9wcyxkZXZvcHMtY2ljZCxkZXZvcHMtaW5mcmEscmVnaXN0ZXJlZC11c2VycyBhcGk6KiIsImF1ZCI6ImpmLWFydGlmYWN0b3J5QDRlYTk5NDMxLTczYjctNDkzZi04YmYyLWZlODhiZDJlMzFmMSIsImlzcyI6ImpmLWFydGlmYWN0b3J5QDRlYTk5NDMxLTczYjctNDkzZi04YmYyLWZlODhiZDJlMzFmMSIsImV4cCI6MTU2MzQ0ODQ2OSwiaWF0IjoxNTYzNDQ0ODY5LCJqdGkiOiIzMGM4MDE5OS1iODJmLTQxMzAtYmNkYS0xZjNkZGU1Zjk0ZDkifQ.ebUy87UzC1_ci3zTIYSNR5DlXGTfsO6o9ROFlHF0iwFQtMcql3lcBDuO724JsUaHDWyaeIv8CduxZ3awSjWSiQRV7tS-8TkxWYexQ-gXyG1NebLdwiT9xQG9ZgzUSh0q-b1E9mKljGunYzXsC7-TAQfFY_lgvxT0T-xZK8t65F9orQEMKA5M8f-0WXkL4jxaihrV4c2MSGvyrbKk521PtzKizERy733nOaWOd3ov30kKR6T_nFnE1qbzdJHyQ7teHbIEXX41lLpZLywTarijRCPatfUEhlNo1GvT-1wJhvtN_rTkKwv2ufMsZHrl37yVo4JXoKdv6FD_bxEPCxTA4Q"
+	base_url = "http://artifactory.****.com:8081/artifactory/api/"
+	token = "****"
 	auth = {'Authorization': 'Bearer ' + token}
-
-	# get_file_in_repo("boss-docker-local")
-	print(get_artifact_version('keycloak-metrics-spi-1.0.2-SNAPSHOT.jar','keycloak-generic-local'))
