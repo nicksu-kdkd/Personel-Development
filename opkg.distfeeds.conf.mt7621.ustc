@@ -1,0 +1,7 @@
+src/gz openwrt_core http://mirrors.ustc.edu.cn/lede/releases/19.07.2/targets/ramips/mt7621/packages
+src/gz openwrt_kmods http://mirrors.ustc.edu.cn/lede/releases/19.07.2/targets/ramips/mt7621/kmods/4.14.171-1-2e88863ccdd594fb8e842df3c25842ee
+src/gz openwrt_base http://mirrors.ustc.edu.cn/lede/releases/19.07.2/packages/mipsel_24kc/base
+src/gz openwrt_luci http://mirrors.ustc.edu.cn/lede/releases/19.07.2/packages/mipsel_24kc/luci
+src/gz openwrt_packages http://mirrors.ustc.edu.cn/lede/releases/19.07.2/packages/mipsel_24kc/packages
+src/gz openwrt_routing http://mirrors.ustc.edu.cn/lede/releases/19.07.2/packages/mipsel_24kc/routing
+src/gz openwrt_telephony http://mirrors.ustc.edu.cn/lede/releases/19.07.2/packages/mipsel_24kc/telephony
