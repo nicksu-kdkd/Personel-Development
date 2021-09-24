@@ -1,8 +1,8 @@
 import requests, json, re
 
-user = 'nicksu'
+user = 'user'
 pw = '5Ik/RI4GnJiqU8gz/qOHAKkTpZlxfaD/bQvRHtoyTg'
-remote_base = 'http://gerrit-mobile.dev.maaii.com/a/projects/'
+remote_base = 'http://gerrit-***i.com/a/projects/'
 dev_base = 'http://172.30.3.253/a/'
 
 
